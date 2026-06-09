@@ -1,6 +1,5 @@
 local hexrgb = require "lua.tools".hexrgb
-
-return {
+local gCol = {
     catppuccin_mocha = {
         bg = hexrgb("#1e1e2e"),
         white = hexrgb("#cdd6f4"),
@@ -26,3 +25,5 @@ return {
         gray = hexrgb("#928374")
     }
 }
+
+return gCol

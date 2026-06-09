@@ -72,10 +72,30 @@ local tables = {
         },
         srs = {
             {
-                {},
-                {},
-                {},
-                {},
+                {
+                    { 0,   0,   0,   0 },
+                    { "I", "I", "I", "I" },
+                    { 0,   0,   0,   0 },
+                    { 0,   0,   0,   0 },
+                },
+                {
+                    { 0, 0, "I", 0 },
+                    { 0, 0, "I", 0 },
+                    { 0, 0, "I", 0 },
+                    { 0, 0, "I", 0 },
+                },
+                {
+                    { 0,   0,   0,   0 },
+                    { 0,   0,   0,   0 },
+                    { "I", "I", "I", "I" },
+                    { 0,   0,   0,   0 },
+                },
+                {
+                    { 0, "I", 0, 0 },
+                    { 0, "I", 0, 0 },
+                    { 0, "I", 0, 0 },
+                    { 0, "I", 0, 0 },
+                }
             },
             {
                 {},
@@ -224,9 +244,9 @@ local tables = {
         }
     },
     col = {
-        ars = { c.red, c.blue, c.orange, c.yellow, c.purple, c.light_blue, c.green, c.gray, c.white },
-        srs = { c.light_blue, c.blue, c.orange, c.yellow, c.green, c.purple, c.red, c.gray, c.white },
-        nrs = { c.light_blue, c.blue, c.orange, c.yellow, c.green, c.purple, c.red, c.gray, c.white }
+        ars = { I = c.red, J = c.blue, L = c.orange, O = c.yellow, S = c.purple, T = c.light_blue, Z = c.green, g = c.gray, ["*"] = c.white },
+        srs = { I = c.light_blue, J = c.blue, L = c.orange, O = c.yellow, S = c.green, T = c.purple, Z = c.red, g = c.gray, ["*"] = c.white },
+        nrs = { I = c.light_blue, J = c.blue, L = c.orange, O = c.yellow, S = c.green, T = c.purple, Z = c.red, g = c.gray, ["*"] = c.white },
     }
 }
 

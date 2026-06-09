@@ -1,8 +1,13 @@
+-- ################################################################
+-- ## only for learning purposes, no rewrite is planned for stak ##
+-- ################################################################
+
 local settings = require("lua.default.settings")
+local fonts = require("lua.default.fonts")
+local ply = require("lua.game.ply").new((settings.boardW / 2) - 2, 0, 20, 20, settings.boardW, settings.boardH,
+    settings.das, settings.dcd, settings.arr, settings.sdf, settings.ldly, settings.endly, settings.lnDly, settings
+    .ndisp, settings.rotsys, settings.bagtype, settings.movereset, (settings.ghosttype > 0) and true or false)
 local debug = require("lua.debug")
-local ply = require("lua.game.ply").new(
-    (settings.boardW / 2) - 2, 0, 0, 0, settings.boardW, settings.boardH, settings.das,
-    settings.dcd, settings.arr, settings.sdr, settings.ldly, settings.lnDly, settings.ndisp, settings.movereset)
 local lg, lk, lw = love.graphics, love.keyboard, love.window
 
 function love.load()
@@ -33,14 +38,13 @@ function love.update(dt)
 end
 
 function love.draw()
-    local w, h = ply:getBoardSize()
-    for y = 1, h do
-        for x = 1, w do
-            lg.rectangle("line", 20 + (20 * (x - 1)), 20 + (20 * (y - 1)), 20, 20)
-        end
-    end
+    lg.setColor(1, 1, 1, 1)
+    ply:drawBrd(settings.blkW, settings.blkH)
 
     if settings.isDebug then
         debug.gameinfo(ply)
     end
+
+    lg.setColor(1, 1, 1, 0.5)
+    lg.print("v0.1dev", fonts.othr, 10, lg.getHeight() - 25)
 end

@@ -9,7 +9,8 @@ function debug.gameinfo(ply)
     local cb, cbstr = ply:getBlk()
     local ltxt
     local rtxt = string.format("x: %g\ny: %g\ncBlk: %g/%s", x, y, cb, cbstr)
-    
+
+    lg.setColor(1, 1, 1, 1)
     if arg[2] == "debug" then
         ltxt = string.format("%g FPS / %gs dt\n%gx%g", lt.getFPS(), lt.getDelta(), lg.getWidth(), lg.getHeight())
         lg.printf(rtxt, fonts.othr, 0, 10, lg.getWidth() - 10, "right")
