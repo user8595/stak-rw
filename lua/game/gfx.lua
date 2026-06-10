@@ -1,5 +1,6 @@
 local gfx = {}
 local gCol = require "lua.gCol"
+local lerp = require "lua.lerp"
 local settings = require "lua.default.settings"
 local tables = require "lua.game.tables"
 local lg = love.graphics
@@ -25,13 +26,29 @@ function gfx.dblocks(blk, x, y, w, h, a, col, tex)
     end
 end
 
-function gfx.dgrid(x, y, ylimit)
+function gfx.dpersp(mtrx, w, h, colstrlist)
+    for y = 1, #mtrx do
+        for x = 1, #mtrx[y] do
+            local blk = mtrx[y][x]
+            if blk ~= 0 then
+                local col = gCol[settings.colorscheme][colstrlist[blk]]
+                local cDark = { col[1] - .2, col[2] - .2, col[3] - .2 }
+                lg.push()
+                lg.translate(0, -(h / 8))
+                gfx.dblocks(blk, x, y, w, h, 1, cDark)
+                lg.pop()
+            end
+        end
+    end
+end
+
+function gfx.dgrid(x, y, ylimit, brdH)
     local w, h = settings.blkW, settings.blkH
 
     if y > ylimit then
         if settings.gridtype > 0 then
             local c = gCol[settings.colorscheme].gray
-            lg.setColor(c[1], c[2], c[3], settings.gridopacity)
+            lg.setColor(c[1], c[2], c[3], lerp.linear(settings.gridopacity, settings.gridopacity / 1.35, y / brdH))
             if settings.gridtype == 1 then
                 lg.rectangle("fill", w * (x - 1), h * (y - 1), w / 8, h / 8)
             elseif settings.gridtype == 2 then
@@ -41,6 +58,22 @@ function gfx.dgrid(x, y, ylimit)
                 lg.rectangle("fill", w * (x - 1) + (w / 10), h * (y - 1) + (w / 10), w - (w / 10), h - (h / 10))
             end
         end
+    end
+end
+
+function gfx.dghost(blk, x, y, w, h, col)
+    if blk ~= 0 then
+        lg.setColor(col[1], col[2], col[3], settings.ghostopacity)
+        if settings.ghosttype == 1 or settings.ghosttype == 3 then
+            lg.setLineWidth(1)
+            lg.setLineWidth((settings.ghosttype == 1) and h / (h / 2) or 1 + (h / h * 2))
+            lg.rectangle("line", w * (x - 1), h * (y - 1), w, h)
+            lg.setLineWidth(1)
+        end
+    end
+
+    if settings.ghosttype ~= 3 then
+        gfx.dblocks(blk, x, y, w, h, settings.ghostopacity, col)
     end
 end
 

@@ -1,85 +1,12 @@
+local ply      = {}
+ply.__index    = ply
+
 local settings = require "lua.default.settings"
-local ply = {}
-ply.__index = ply
-
-local tables = require "lua.game.tables"
-local gfx = require "lua.game.gfx"
-local lg = love.graphics
-
---- returns framestep-like value with dt
----@param fps number
----@param mult number
----@return number
-local function frameStep(fps, mult)
-    return fps * (fps * mult) / fps
-end
-
----checks for permissive block movement
----@param blk table -- current block table
----@param mtrx table -- board table
----@param x integer -- current block x
----@param y integer -- current block y
-local function bMove(blk, mtrx, x, y)
-    if blk then
-        for my = 1, #blk do
-            for mx = 1, #blk[my] do
-                if blk[my][mx] ~= 0 then
-                    local tx, ty = x + mx, math.floor(y + my)
-                    if tx < 1 or tx > #mtrx[my] or ty > #mtrx then
-                        return false
-                    else
-                        if ty > 0 then
-                            if mtrx[ty][tx] ~= 0 then
-                                return false
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    else
-        return false
-    end
-    return true
-end
-
----adds blocks to board table
----@param blk table
----@param mtrx table
----@param x integer
----@param y integer
-local function bAdd(blk, mtrx, x, y)
-    if blk then
-        for my = 1, #blk do
-            for mx = 1, #blk[my] do
-                local b = blk[my][mx]
-                if y + my > 0 then
-                    if b ~= 0 then
-                        mtrx[math.floor(y + my)][x + mx] = b
-                    end
-                end
-            end
-        end
-    end
-end
-
----returns the lowest y position for the current block
----@param blk table
----@param mtrx table
----@param x integer
----@param y integer
----@return number
-local function lowestCells(blk, mtrx, x, y)
-    local ty = (y >= 0) and math.floor(y) or 0
-    for _ = 1, #mtrx do
-        if bMove(blk, mtrx, x, ty + 1) then
-            ty = ty + 1
-        else
-            break
-        end
-    end
-    return ty
-end
+local gCol     = require "lua.gCol"
+local states   = require "lua.game.states"
+local tables   = require "lua.game.tables"
+local gfx      = require "lua.game.gfx"
+local lg       = love.graphics
 
 ---creates new player object
 ---@param initX number -- initial x postion
@@ -115,9 +42,9 @@ function ply.new(initX, initY, brdX, brdY, w, h, das, dcd, arr, sdf, ldly, endly
         brd = {},
         next = {},
         ndisp = ndisp,
-        cBlk = 1,
-        hold = 0,
+        cblk = 1,
         brot = 1,
+        hold = 0,
         d = 1, -- 1: ccw, 2: cw
         rotsys = rotsys,
         bagtype = bagtype,
@@ -143,17 +70,23 @@ function ply.new(initX, initY, brdX, brdY, w, h, das, dcd, arr, sdf, ldly, endly
         islndly = false,
         isirs = false,
         isihs = false,
+        -- options
         useghost = ghost,
+        gravinc = true,
+        -- states
+        isfail = false,
         -- for per-level handling
         handleidx = 1,
         grav = 0,       -- 0 - 20+
-        spinReward = 0, -- 0: none, 1: mini, 2: full
+        spinReward = 0, -- 0: none, 1: mini, 2: normal
         alreadyHold = false,
         alreadyRot = false,
         pieces = 0,
         finesse = 0,
         time = 0,
         lines = 0,
+        ltarget = 10,
+        mtarget = 100,
         sts = {
             sg = 0,
             db = 0,
@@ -171,6 +104,7 @@ function ply.new(initX, initY, brdX, brdY, w, h, das, dcd, arr, sdf, ldly, endly
         sentLines = 0,
         score = 0,
         lv = 0,
+        mlv = 0,
         gQueue = {},  -- garbage queue
         clrYPos = {}, -- for line effect & particles, lndly
         sGCheck = {}, -- bottom rows fill check for sg.
@@ -233,46 +167,135 @@ end
 ---@return integer
 ---@return string
 function ply:getBlk()
-    local cB = (self.cBlk > 0) and tables.str[self.cBlk] or "none"
-    return self.cBlk, cB
+    local cB = (self.cblk > 0) and tables.str[self.cblk] or "none"
+    return self.cblk, cB
+end
+
+---adjusts player board position
+---@param x integer
+---@param y integer
+function ply:setBrdPos(x, y)
+    self.brdX, self.brdY = x, y
+end
+
+function ply:initPos()
+    local w, _ = self:getBoardSize()
+    self.x, self.y = math.floor(w / 2 - 2), 0
+    self.brot = 1
+end
+
+function ply:clrBrd()
+    for y = 1, #self.brd do
+        for x = 1, #self.brd[y] do
+            self.brd[y][x] = 0
+        end
+    end
+end
+
+function ply:move(d)
+    local blk = tables.blk[self.rotsys][self.cblk][self.brot]
+    self.dastimer = 0
+    if states.bMove(blk, self.brd, self.x + d, self.y) then
+        self.x = self.x + d
+    end
+end
+
+function ply:rot(r)
+    if self.brot + r <= #tables.blk[self.rotsys][self.cblk] and self.brot + r > 0 then
+        self.brot = self.brot + r
+    else
+        self.brot = (r == 1) and 1 or #tables.blk[self.rotsys][self.cblk]
+    end
+end
+
+function ply:shiftBlk(d, dt)
+    local blk = tables.blk[self.rotsys][self.cblk][self.brot]
+    if self.dastimer < self.das then
+        self.dastimer = self.dastimer + dt
+    else
+        self.x = states.lowestShift(blk, self.brd, self.x, self.y, d)
+    end
+end
+
+function ply:drop()
+    --TODO: Make block table a single value on player object?
+    local blk = tables.blk[self.rotsys][self.cblk][self.brot]
+    if states.bMove(blk, self.brd, self.x, self.y + 1) and self.sdf > 0 then
+        self.y = self.y + 1
+    end
+end
+
+function ply:dropRepeat()
+    local blk = tables.blk[self.rotsys][self.cblk][self.brot]
+    if states.bMove(blk, self.brd, self.x, self.y + 1) and self.sdf > 0 then
+        self.y = self.y + 1
+    else
+        self.y = states.lowestCells(blk, self.brd, self.x, self.y)
+    end
+end
+
+function ply:hDrop()
+    local blk = tables.blk[self.rotsys][self.cblk][self.brot]
+    local lowesty = states.lowestCells(blk, self.brd, self.x, self.y)
+    states.bAdd(blk, self.brd, self.x, lowesty)
+    self.alreadyHold = false
+    self:initPos()
+end
+
+function ply:holdfunc()
+    if not self.alreadyHold then
+        if self.hold ~= 0 then
+            self.hold, self.cblk = self.cblk, self.hold
+        else
+            self.hold = self.cblk
+        end
+        self:initPos()
+        self.alreadyHold = true
+    end
 end
 
 ---draws player board
 function ply:drawBrd(blkW, blkH)
-    lg.push()
-    lg.translate(self.brdX, self.brdY)
     local bwd, bhg = self:getBoardSize()
-    lg.rectangle("line", 0, 0, bwd * blkW, bhg * blkH)
+    local c = gCol[settings.colorscheme]
+    lg.push()
+    lg.translate(self.brdX + ((blkW * bwd) / 2), self.brdY + ((blkH * bhg) / 2))
+    lg.scale(settings.scale, settings.scale)
+    lg.rotate(self.sRval)
+    lg.translate((-(blkW * bwd) / 2), -(blkH * bhg) / 2)
 
+    gfx.dpersp(self.brd, blkW, blkH, tables.col[self.rotsys])
     for y = 1, #self.brd do
         for x = 1, #self.brd[y] do
             local blk = self.brd[y][x]
-            local col = tables.col[self.rotsys][blk]
-            gfx.dgrid(x, y, 0)
-            gfx.dblocks(blk, x, y, blkW, blkH, 1, col)
+            local col = c[tables.col[self.rotsys][blk]]
+            gfx.dgrid(x, y, 0, bhg)
+            if blk ~= 0 then
+                gfx.dblocks(blk, x, y, blkW, blkH, 1, col)
+            end
         end
     end
 
-    local blocks = tables.blk[self.rotsys][self.cBlk][self.brot]
-    if self.cBlk > 0 and self.cBlk <= #tables.blk[self.rotsys] then
+    lg.setLineWidth(1)
+    lg.setLineWidth(1.5)
+    lg.setColor(c.white)
+    lg.rectangle("line", 0, 0, bwd * blkW, bhg * blkH)
+    lg.setLineWidth(1)
+
+    if self.cblk > 0 and self.cblk <= #tables.blk[self.rotsys] then
+        local blocks = tables.blk[self.rotsys][self.cblk][self.brot]
+        local lowesty = states.lowestCells(blocks, self.brd, self.x, self.y)
+        lg.push()
+        lg.translate(blkW * self.x, blkH * self.y)
+        gfx.dpersp(blocks, blkW, blkH, tables.col[self.rotsys])
+        lg.pop()
         for y = 1, #blocks do
             for x = 1, #blocks[y] do
                 local blk = blocks[y][x]
-                local col = tables.col[self.rotsys][blk]
+                local col = c[tables.col[self.rotsys][blk]]
+                gfx.dghost(blk, self.x + x, lowesty + y, blkW, blkH,
+                    (settings.ghostcolors) and col or gCol[settings.colorscheme].white)
                 gfx.dblocks(blk, self.x + x, self.y + y, blkW, blkH, (self.endly - self.endlytimer) / self.endly, col)
-                if self.useghost then
-                    local lowesty = lowestCells(blocks, self.brd, self.x, self.y) + y
-                    if settings.ghosttype == 1 then
-                        if blk ~= 0 then
-                            lg.setLineWidth(1)
-                            lg.setLineWidth(blkH / (blkH / 2))
-                            lg.setColor(col[1], col[2], col[3], settings.ghostopacity)
-                            lg.rectangle("line", blkW * (self.x + x - 1), blkH * (lowesty - 1), blkW, blkH)
-                            lg.setLineWidth(1)
-                        end
-                    end
-                    gfx.dblocks(blk, self.x + x, lowesty, blkW, blkH, settings.ghostopacity, col)
-                end
             end
         end
     end

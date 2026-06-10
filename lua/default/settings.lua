@@ -3,10 +3,11 @@ local settings = {
     -- visual settings
     colorscheme = "catppuccin_mocha", -- "catppuccin_mocha", "gruvbox"
     blkTheme = "", -- empty string ("") / nil for colorscheme
-    gridopacity = 0.5, -- ex. 0, 0.5, 1
+    gridopacity = 0.35, -- ex. 0, 0.5, 1
     gridtype = 1, -- 1: corner dots, 2: grid, 3: checkerboard
     ghostopacity = 0.5,
-    ghosttype = 1, -- 0: none, 1: bordered, 2: solid, 3: block image
+    ghostcolors = true,
+    ghosttype = 1, -- 0: none, 1: bordered, 2: solid, 3: outline, 4: block image theme
     locktype = 1, -- 0: none, 1: solid, 2: triangular, 3: "reveal" effect
     hdropeffect = true,
     lineeffects = true,
