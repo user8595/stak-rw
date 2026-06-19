@@ -1,3 +1,4 @@
+-- game loop checks
 local states = {}
 
 --- returns framestep-like value with dt
@@ -6,6 +7,19 @@ local states = {}
 ---@return number
 function states.frameStep(fps, mult)
     return fps * (fps * mult) / fps
+end
+
+---shuffle & returns shuffled table
+---@param t any
+---@return table
+function states.shuffle(t)
+    local s = {}
+    for i = 1, #t do s[i] = t[i] end
+    for i = #t, 2, -1 do
+        local j = love.math.random(i)
+        s[i], s[j] = s[j], s[i]
+    end
+    return s
 end
 
 ---checks for permissive block movement
@@ -18,8 +32,8 @@ function states.bMove(blk, mtrx, x, y)
         for my = 1, #blk do
             for mx = 1, #blk[my] do
                 if blk[my][mx] ~= 0 then
-                    local tx, ty = x + mx, math.floor(y + my)
-                    if tx < 1 or tx > #mtrx[my] or ty > #mtrx then
+                    local tx, ty = math.floor(x + mx), math.floor(y + my)
+                    if tx < 1 or tx > #mtrx[#mtrx] or ty > #mtrx then
                         return false
                     else
                         if ty > 0 then
@@ -37,44 +51,6 @@ function states.bMove(blk, mtrx, x, y)
     return true
 end
 
----adds blocks to board table
----@param blk table
----@param mtrx table
----@param x integer
----@param y integer
-function states.bAdd(blk, mtrx, x, y)
-    if blk then
-        for my = 1, #blk do
-            for mx = 1, #blk[my] do
-                local b = blk[my][mx]
-                if y + my > 0 and y + my <= #mtrx then
-                    if b ~= 0 then
-                        mtrx[math.floor(y + my)][x + mx] = b
-                    end
-                end
-            end
-        end
-    end
-
-    for y = 1, #mtrx do
-        local clr = true
-        for x = 1, #mtrx do
-            if mtrx[y][x] == 0 then
-                clr = false
-                break
-            end
-        end
-        if clr then
-            for x = 1, #mtrx[y] do
-                for ydel = y, 2, -1 do
-                    mtrx[ydel][x] = mtrx[ydel - 1][x]
-                end
-                mtrx[1][x] = 0
-            end
-        end
-    end
-end
-
 ---returns the lowest y position for the current block
 ---@param blk table
 ---@param mtrx table
@@ -82,28 +58,23 @@ end
 ---@param y integer
 ---@return number
 function states.lowestCells(blk, mtrx, x, y)
-    local ty = (y >= 0) and math.floor(y) or 0
-    for _ = 1, #mtrx do
-        if states.bMove(blk, mtrx, x, ty + 1) then
-            ty = ty + 1
-        else
-            break
-        end
+    local ty = y
+    while states.bMove(blk, mtrx, x, ty + 1) and ty <= #mtrx do
+        ty = ty + 1
     end
-    return ty
+    return math.floor(ty)
 end
 
 function states.lowestShift(blk, mtrx, x, y, d)
-    local y = (y > 0) and y or 1
-    local tx = x
-    for _ = 1, #mtrx[y] do
-        if states.bMove(blk, mtrx, tx + d, y) then
+    local tx, ty = math.floor(x), y
+    for _ = 1, #mtrx[#mtrx] do
+        if states.bMove(blk, mtrx, tx + d, ty) then
             tx = tx + d
         else
             break
         end
     end
-    return tx
+    return tx, ty
 end
 
 return states

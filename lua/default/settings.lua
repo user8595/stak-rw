@@ -1,16 +1,20 @@
----@format disable
 local settings = {
     -- visual settings
     colorscheme = "catppuccin_mocha", -- "catppuccin_mocha", "gruvbox"
-    blkTheme = "", -- empty string ("") / nil for colorscheme
-    gridopacity = 0.35, -- ex. 0, 0.5, 1
-    gridtype = 1, -- 1: corner dots, 2: grid, 3: checkerboard
+    blkTheme = "",                    -- empty string ("") / nil for colorscheme
+    gridopacity = 0.35,               -- ex. 0, 0.5, 1
+    gridtype = 1,                     -- 1: corner dots, 2: grid, 3: checkerboard
     ghostopacity = 0.5,
     ghostcolors = true,
-    ghosttype = 1, -- 0: none, 1: bordered, 2: solid, 3: outline, 4: block image theme
-    locktype = 1, -- 0: none, 1: solid, 2: triangular, 3: "reveal" effect
+    ghosttype = 4,      -- 0: none, 1: bordered, 2: solid, 3: outline, 4: block image theme
+    locktype = 1,       -- 0: none, 1: solid, 2: triangular, 3: "reveal" effect
+    lineeffecttype = 1, -- 0: none, 1: "spread" effect, 2: flash w. scale
+    lefctldly = false,  -- if line effect should use line delay timer
     hdropeffect = true,
-    lineeffects = true,
+    smoothfall = false,
+    --TODO: Implement rotation centers
+    showrotcenter = false,
+    target = 80,
     scale = 1,
 
     -- keybinds
@@ -33,20 +37,23 @@ local settings = {
     blkW = 32,
     blkH = 32,
     rotsys = "srs",     -- "srs", "ars", "nrs"
-    bagtype = "modern", -- "modern", "master", "classic", "rand"
-    das = 100 / 1000,
+    bagtype = "modern", -- "modern", "master", "master35", "classic", "rand"
+    das = 85 / 1000,
     dcd = 0 / 1000,
-    arr = 6 / 1000,
-    sdf = 0 / 1000,
+    arr = 0,      -- in frames
+    sdf = 0 / 10, -- 0 for instant drop
     ldly = 500 / 1000,
     endly = 250 / 1000,
     lndly = 250 / 1000,
-    ndisp = 5, -- next display count
+    ndisp = 6, -- next display count
     movereset = 15,
     useirs = false,
     useihs = false,
+    hmult = true,
+    invis = false,
 
     isDebug = false,
+    framestep = 60
 }
 
 return settings

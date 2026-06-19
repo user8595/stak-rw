@@ -63,6 +63,41 @@ function tools.colLerp(col1, col2, t)
     lg.setColor(lerp.linear(col1[1], col2[1], t), lerp.linear(col1[2], col2[2], t), lerp.linear(col1[3], col2[3], t), lerp.linear(col1[4], col2[4], t))
 end
 
+---returns a new concatenated table
+---@param t1 table
+---@param t2 table
+function tools.concatTab(t1, t2)
+    for i = 1, #t2 do
+        t1[#t1 + 1] = t2[i]
+    end
+    return t1
+end
+
+---at least it works though
+---@param val integer
+---@param inv boolean
+---@param max integer
+---@param spd integer
+---@param dt integer
+---@return integer
+---@return boolean
+function tools.invPulse(val, inv, max, spd, dt)
+    if not inv then
+        if val < max then
+            val = val + dt * spd
+        else
+            inv = true
+        end
+    else
+        if val > 0 then
+            val = val - dt * spd
+        else
+            inv = false
+        end
+    end
+    return val, inv
+end
+
 ---aabb bounding box collision detection
 ---@param x1 number
 ---@param y1 number

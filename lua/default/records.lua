@@ -1,3 +1,4 @@
+-- a highscore table?
 local records = {
     spr = {
         {
