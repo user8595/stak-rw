@@ -1,5 +1,4 @@
 function love.conf(t)
-    -- :oyes:
     -- new/neo to plus
     t.identity = "stak-p"
     t.version = "11.5"

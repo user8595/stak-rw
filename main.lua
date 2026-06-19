@@ -1,3 +1,11 @@
+-- this already feels nostalgic
+-- even though it's been only 3-4 months since i worked on the previous game..
+
+-- ############################################################
+-- # as usual, this game relies a LOT with 1-based indexing.. #
+-- ############################################################
+-- and clouds are white
+
 local lg, lk, lw = love.graphics, love.keyboard, love.window
 local settings   = require("lua.default.settings")
 local fonts      = require("lua.default.fonts")
