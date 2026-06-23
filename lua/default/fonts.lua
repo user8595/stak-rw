@@ -1,5 +1,6 @@
 local fonts = {
     main = love.graphics.newFont("/assets/fonts/monogram-extended.TTF", 48),
+    beeg = love.graphics.newFont("/assets/fonts/monogram-extended.TTF", 72),
     othr = love.graphics.newFont("/assets/fonts/Picopixel.ttf", 14)
 }
 

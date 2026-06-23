@@ -9,7 +9,7 @@ function debug.gameinfo(ply)
     local _, yinv = ply:getPos(false, true)
     local cb, cbstr, ch = ply:getBlk()
     local ltxt
-    local rtxt = string.format("x: %g\ny: %g/%g\ncblk: %g/%s\nhold: %g", x, y, yinv, cb, cbstr, ch)
+    local rtxt = string.format("x: %g\ny: %g/%g\ncblk: %g/%s\nhold: %g\ngrav: %g", x, y, yinv, cb, cbstr, ch, ply.grav)
 
     lg.setColor(1, 1, 1, 1)
     if arg[2] == "debug" then

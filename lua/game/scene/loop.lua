@@ -28,6 +28,7 @@ function loop.game(...)
         if game.palp < 1 then
             game.palp = game.palp + dt * 16
         end
+        game.ptimer = game.ptimer + dt
     end
 end
 

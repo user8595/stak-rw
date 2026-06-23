@@ -33,6 +33,24 @@ function gfx.dblocks(blk, x, y, w, h, a, col, tex, quad)
     end
 end
 
+--TODO: Implement stencil clipping in outlines, conditional checks (?) & perspective effect support
+function gfx.doutline(mtrx, w, h, col, a)
+    local woff, hoff = -w / 14, -h / 14
+    for y = 1, #mtrx do
+        for x = 1, #mtrx[y] do
+            local blk = mtrx[y][x]
+            if blk ~= 0 then
+                lg.setColor(col[1], col[2], col[3], a)
+                lg.push()
+                lg.translate(woff, hoff)
+                -- i forgot basic aritmetic
+                lg.rectangle("fill", w * (x - 1), h * (y - 1), w - (woff * 2), h - (hoff * 2))
+                lg.pop()
+            end
+        end
+    end
+end
+
 ---draws blocks for perspective effect
 ---@param mtrx table
 ---@param w integer
@@ -105,7 +123,7 @@ function gfx.dghost(blk, x, y, w, h, a, col, tex, quad)
 
     if settings.ghosttype ~= 3 then
         gfx.dblocks(blk, x, y, w, h, a, col, (settings.ghosttype == 4) and (tex) and tex or nil,
-        (quad) and quad or nil)
+            (quad) and quad or nil)
     end
 end
 

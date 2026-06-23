@@ -9,6 +9,8 @@ local game = {
     gfade = 0,
     ginv = false,
     palp = 0,
+    pcount = 0,
+    ptimer = 0,
 }
 
 return game
