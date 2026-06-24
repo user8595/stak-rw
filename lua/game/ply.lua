@@ -10,6 +10,7 @@ local gfx      = require "lua.game.gfx"
 local game     = require "lua.default.game"
 local lerp     = require "lua.lerp"
 local tClear   = require("lua.tClear")
+local tools    = require("lua.tools")
 
 local lg, lk   = love.graphics, love.keyboard
 
@@ -460,6 +461,9 @@ function ply:holdfunc()
     end
 end
 
+local dbg = {
+    clr = 0, pos = 0, bag = 0
+}
 function ply:key(k)
     if self.cblks and not self.isfail then
         if k == settings.keys.left then
@@ -489,26 +493,22 @@ function ply:key(k)
         if k == "e" then
             self:clrBrd()
             self:initPos()
-            self.cblk = 0
-            self.hold = 0
-            tClear(self.next)
-            if #self.next < self.ndisp then
-                rand[self.bagtype](self, false)
-            end
-            self:initPiece()
+            dbg.clr = dbg.clr + 1
         end
         if k == "t" then
             self:initPos()
             self.cblk = 0
             self.hold = 0
             tClear(self.next)
-            if #self.next < self.ndisp then
-                rand[self.bagtype](self, false)
+            if #self.next < self.ndisp or self.ndisp then
+                rand[self.bagtype](self, true)
             end
             self:initPiece()
+            dbg.bag = dbg.bag + 1
         end
         if k == "r" then
             self:initPos()
+            dbg.pos = dbg.pos + 1
         end
 
         if k == "backspace" then
@@ -524,13 +524,16 @@ end
 ---uodates player object
 ---@param dt integer
 function ply:update(dt)
-    local _, h = self:getBoardSize()
-    local lowestY = states.lowestCells(self.cblks[self.brot], self.brd, self.x, self.y)
-    local gUpd = dt * states.frameStep(settings.framestep, self.grav)
-    if lowestY - self.y >= self.grav then
-        self.y = self.y + gUpd
-    else
-        self.y = lowestY
+    if not self.isfail then
+        local lowestY = states.lowestCells(self.cblks[self.brot], self.brd, self.x, self.y)
+        local gUpd = dt * states.frameStep(settings.framestep, self.grav)
+        if lowestY - self.y >= self.grav then
+            self.y = self.y + gUpd
+        else
+            self.y = lowestY
+        end
+
+        self.time = self.time + love.timer.getDelta()
     end
 end
 
@@ -575,75 +578,27 @@ function ply:drwTrgtLn(w, h, val, max, c, cnear)
     end
 end
 
+function ply:drwInterface()
+    --TODO: Finish UI
+end
+
+function ply:drwOverlay()
+    --TODO: Finish input overlay
+end
+
+-- temporary
 local tex = lg.newImage("/assets/img/blocks/bone.png")
 tex:setFilter("nearest", "nearest")
----draws player board
-function ply:drawBrd(blkW, blkH)
-    -- !NOTE
-    -- keep x & y values to 0 if you need to render a object, as it's already handled by lg.translate(x, y)
-    local bwd, bhg = self:getBoardSize()
-    local c = gCol[settings.colorscheme]
-    -- board translate & rotations
-    lg.push()
-    lg.translate(self.brdX + ((blkW * bwd) / 2), self.brdY + ((blkH * bhg) / 2))
-    lg.scale(settings.scale, settings.scale)
-    lg.rotate(self.sRval)
-    lg.translate((-(blkW * bwd) / 2), -(blkH * bhg) / 2)
-    lg.setColor(c.board)
-    lg.rectangle("fill", 0, 0, blkW * bwd, blkH * bhg)
-    -- playfield area
-    -- rendering a rectangle could render it offboard if self.hmult is true here
-    lg.push()
-    lg.translate(0, (self.hmult) and -(blkH * bhg) or 0)
-    local co = (not self.isfail) and c.white or c.light_gray
-    if self.isfail or not self.invis then
-        gfx.dpersp(self.brd, blkW, blkH, tables.col[self.rotsys], (self.isfail) and "gray" or nil)
-        gfx.doutline(self.brd, blkW, blkH, co, 1)
-    elseif self.isfail and self.invis then
-        gfx.doutline(self.brd, blkW, blkH, co, 1)
-    end
-
-    for y = 1, #self.brd do
-        for x = 1, #self.brd[y] do
-            local blk = self.brd[y][x]
-            local col = (not self.isfail) and c[tables.col[self.rotsys][blk]] or c.gray
-            local grdy = (not self.hmult) and y > 0 or y > bhg
-            if grdy then
-                gfx.dgrid(x, y, 0, bhg, self.hmult)
-            end
-            if self.isfail or not self.invis then
-                if blk ~= 0 then
-                    gfx.dblocks(blk, x, y, blkW, blkH, 1, col, tex)
-                end
-            end
-        end
-    end
-
-    lg.setLineWidth(1)
-    lg.setLineWidth(1.5 * (blkH / 32))
-    self:drwTrgtLn(blkW, blkH, self.val, self.max, c.yellow, c.green)
-    lg.setLineWidth(1)
-
-    -- next & hold queue
-    -- local sc = 1.075
-    local sc = 1.12
-    local hn = (self.hmult) and blkH or 0
-    lg.push()
-    lg.translate(blkW * (bwd + 1), hn * (sc + .175))
-    self:drawQueue(self.next, blkW / sc, blkH / sc, self.ndisp, true)
-    lg.pop()
-    lg.push()
-    lg.translate((-blkW) * 5, hn * (sc + .175))
-    self:drawQueue(self.hold, blkW / sc, blkH / sc, 1, true)
-    lg.pop()
-
+function ply:drwCurrentPiece(blkW, blkH)
     if self.cblk > 0 and self.cblk <= #tables.blk[self.rotsys] then
         local blocks = self.cblks[self.brot]
         local lowesty = states.lowestCells(blocks, self.brd, self.x, self.y)
+        local c = gCol[settings.colorscheme]
+
         local py = (settings.smoothfall) and self.y or math.floor(self.y)
         lg.push()
         lg.translate(blkW * math.floor(self.x), blkH * py)
-        gfx.dpersp(blocks, blkW, blkH, tables.col[self.rotsys], (self.isfail) and "gray" or nil)
+        gfx.dpersp(blocks, blkW, blkH, 1, tables.col[self.rotsys], (self.isfail) and "gray" or nil)
         lg.pop()
         for y = 1, #blocks do
             for x = 1, #blocks[y] do
@@ -661,6 +616,88 @@ function ply:drawBrd(blkW, blkH)
                 end
             end
         end
+    end
+end
+
+---draws player board
+function ply:drawBrd(blkW, blkH)
+    -- !NOTE
+    -- keep base x & y values to 0 if you need to render a object, as it's already handled by lg.translate(x, y)
+    local bwd, bhg = self:getBoardSize()
+    local c = gCol[settings.colorscheme]
+    -- board translate & rotations
+    lg.push()
+    lg.translate(self.brdX + ((blkW * bwd) / 2), self.brdY + ((blkH * bhg) / 2))
+    lg.scale(settings.scale, settings.scale)
+    lg.rotate(self.sRval)
+    lg.translate((-(blkW * bwd) / 2), -(blkH * bhg) / 2)
+    lg.setColor(c.board)
+    lg.rectangle("fill", 0, 0, blkW * bwd, blkH * bhg)
+    -- playfield area
+    -- rendering a rectangle could render it offboard if self.hmult is true here
+    lg.push()
+    lg.translate(0, (self.hmult) and -(blkH * bhg) or 0)
+    local co = (not self.isfail) and c.white or c.light_gray
+    local balp = (game.isPaused) and 0 or 1
+    -- duct tape
+    for y = 1, #self.brd do
+        for x = 1, #self.brd[y] do
+            local grdy = (not self.hmult) and y > 0 or y > bhg
+            if grdy then
+                gfx.dgrid(x, y, 0, bhg, self.hmult)
+            end
+        end
+    end
+
+    -- "just short circuit it"
+    if self.isfail or not self.invis or
+        self.isfail and self.invis then
+        if settings.outlineEfct then
+            lg.stencil(function()
+                lg.rectangle("fill", 0, 0, blkW * bwd, blkH * #self.brd)
+            end, "replace", 1)
+            lg.setStencilTest("greater", 0)
+            gfx.doutline(settings.perspEfct, self.brd, blkW, blkH, co, balp)
+            lg.setStencilTest()
+        end
+
+        if settings.perspEfct then
+            gfx.dpersp(self.brd, blkW, blkH, balp, tables.col[self.rotsys], (self.isfail) and "gray" or nil)
+        end
+    end
+
+    for y = 1, #self.brd do
+        for x = 1, #self.brd[y] do
+            local blk = self.brd[y][x]
+            local col = (not self.isfail) and c[tables.col[self.rotsys][blk]] or c.gray
+            if self.isfail or not self.invis then
+                if blk ~= 0 then
+                    gfx.dblocks(blk, x, y, blkW, blkH, balp, col, tex)
+                end
+            end
+        end
+    end
+
+    lg.setLineWidth(1)
+    lg.setLineWidth(1.5 * (blkH / 32))
+    self:drwTrgtLn(blkW, blkH, self.val, self.max, c.yellow, c.green)
+    lg.setLineWidth(1)
+
+    -- next & hold queue
+    if not game.isPaused then
+        -- local sc = 1.075
+        local sc = 1.12
+        local hn = (self.hmult) and blkH or 0
+        lg.push()
+        lg.translate(blkW * (bwd + 1), hn * (sc + .175))
+        self:drawQueue(self.next, blkW / sc, blkH / sc, self.ndisp, true)
+        lg.pop()
+        lg.push()
+        lg.translate((-blkW) * 5, hn * (sc + .175))
+        self:drawQueue(self.hold, blkW / sc, blkH / sc, 1, true)
+        lg.pop()
+
+        self:drwCurrentPiece(blkW, blkH)
     end
 
     if self.mode == 1 then
@@ -682,7 +719,14 @@ function ply:drawBrd(blkW, blkH)
             self.d ..
             "(" ..
             self.lastkick .. ")" .. " " .. self.val .. "/" .. self.max .. " " .. tostring(self.isfail) .. " " .. self
-            .dastimer, 0,
+            .dastimer ..
+            "\n" ..
+            dbg.pos ..
+            "/" ..
+            dbg.clr ..
+            "/" ..
+            dbg.bag ..
+            "\n" .. self.time .. " " .. tools.formatTime(self.time, false), 0,
             blkH * bhg)
     end
     -- end of playfield area

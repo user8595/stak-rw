@@ -34,17 +34,18 @@ function gfx.dblocks(blk, x, y, w, h, a, col, tex, quad)
 end
 
 --TODO: Implement stencil clipping in outlines, conditional checks (?) & perspective effect support
-function gfx.doutline(mtrx, w, h, col, a)
-    local woff, hoff = -w / 14, -h / 14
+function gfx.doutline(persp, mtrx, w, h, col, a)
+    local woff, hoff = -w / 12, -h / 12
+    local p = (persp) and h / 8 or 0
     for y = 1, #mtrx do
         for x = 1, #mtrx[y] do
             local blk = mtrx[y][x]
             if blk ~= 0 then
                 lg.setColor(col[1], col[2], col[3], a)
                 lg.push()
-                lg.translate(woff, hoff)
+                lg.translate(woff, hoff - p)
                 -- i forgot basic aritmetic
-                lg.rectangle("fill", w * (x - 1), h * (y - 1), w - (woff * 2), h - (hoff * 2))
+                lg.rectangle("fill", w * (x - 1), h * (y - 1), w - (woff * 2), (h + p) - (hoff * 2))
                 lg.pop()
             end
         end
@@ -55,9 +56,10 @@ end
 ---@param mtrx table
 ---@param w integer
 ---@param h integer
+---@param a integer
 ---@param colstrlist table
----@param stroverride string | nil
-function gfx.dpersp(mtrx, w, h, colstrlist, stroverride)
+---@param stroverride string | nil -- for block color
+function gfx.dpersp(mtrx, w, h, a, colstrlist, stroverride)
     for y = 1, #mtrx do
         for x = 1, #mtrx[y] do
             local blk = mtrx[y][x]
@@ -67,7 +69,7 @@ function gfx.dpersp(mtrx, w, h, colstrlist, stroverride)
                 local cDark = { col[1] - .2, col[2] - .2, col[3] - .2 }
                 lg.push()
                 lg.translate(0, -(h / 8))
-                gfx.dblocks(blk, x, y, w, h, 1, cDark)
+                gfx.dblocks(blk, x, y, w, h, a, cDark)
                 lg.pop()
             end
         end

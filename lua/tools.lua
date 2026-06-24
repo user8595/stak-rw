@@ -98,6 +98,17 @@ function tools.invPulse(val, inv, max, spd, dt)
     return val, inv
 end
 
+---returns a formatted time string
+---@param val integer
+---@return string
+function tools.formatTime(val, usehour)
+    local s, ms = math.modf(val)
+    return (usehour) and
+    string.format("%02d:%02d:%02d.%s", s / 3600, (s / 60) % 60, s % 60, string.sub(string.format("%.2f", ms), 3, -1)) or
+    --TODO: Hide hours number when minutes < 60
+    string.format("%02d:%02d.%s", s / 60, s % 60, string.sub(string.format("%.2f", ms), 3, -1))
+end
+
 ---aabb bounding box collision detection
 ---@param x1 number
 ---@param y1 number

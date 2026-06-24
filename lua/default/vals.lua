@@ -1,8 +1,8 @@
-local func = {}
+local vals = {}
 local settings = require "lua.default.settings"
 local lg = love.graphics
 
-function func.newply(invis)
+function vals.newply(invis)
     local ply = require("lua.game.ply"):new((settings.boardW / 2) - 2, -2, 0, 0, settings.boardW,
     settings.boardH, settings.hmult, settings.das, settings.dcd, settings.arr, settings.sdf, settings.ldly,
     settings.endly,
@@ -14,4 +14,4 @@ function func.newply(invis)
     return ply
 end
 
-return func
+return vals

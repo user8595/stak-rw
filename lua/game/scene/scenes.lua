@@ -23,11 +23,14 @@ function scenes.game(...)
     if ply.isfail then
         lg.push()
         lg.translate(0, (lg.getHeight() / 2) - fail:getHeight())
-        lg.setColor(gCol[settings.colorscheme].red[1] - .4, gCol[settings.colorscheme].red[2] - .4,
-            gCol[settings.colorscheme].red[3] - .4, 1)
+        lg.setColor(c.red[1] - .4, c.red[2] - .4, c.red[3] - .4, 1)
         lg.printf("GAME\nOVER", fail, 3, 3, lg.getWidth(), "center")
         lg.setColor(gCol[settings.colorscheme].red)
         lg.printf("GAME\nOVER", fail, 0, 0, lg.getWidth(), "center")
+        lg.setColor(1, 1, 1, 0.5)
+        lg.printf({c.gray, "<`> to restart game"}, fonts.othr, 2, ((fail:getHeight() * 2) - (fonts.othr:getHeight() / 2)) + 2, lg.getWidth(), "center")
+        lg.setColor(1, 1, 1, 1)
+        lg.printf({c.orange, "<`>", c.white, " to restart game"}, fonts.othr, 0, (fail:getHeight() * 2) - (fonts.othr:getHeight() / 2), lg.getWidth(), "center")
         lg.pop()
     end
 

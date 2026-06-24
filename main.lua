@@ -14,7 +14,7 @@ local debug      = require("lua.debug")
 local game       = require("lua.default.game")
 local loop       = require("lua.game.scene.loop")
 local scenes     = require("lua.game.scene.scenes")
-local func       = require("lua.default.func")
+local func       = require("lua.default.vals")
 
 local ply        = func.newply(settings.invis)
 
